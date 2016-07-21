@@ -1,0 +1,3 @@
+### This is the Repository of my master project - a mobile application for twitter data prediction on pandemics
+
+## Coming soon...
