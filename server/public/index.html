@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+var socket = io.connect('localhost:6003', {reconnect: true});
+const monthNames = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+function socket_conn(event){
+  var inputStr  = document.getElementById("scanner").value;
+  if (inputStr.length!=0){
+  socket.emit('test',inputStr)
+}
+else {
+  alert("Your Input is invalid");
+}
+};
+
+socket.on('testRespond', function(results) {
+  console.log('test respond received');
+
+  var container = document.getElementById("container");
+
+  var input = document.createElement("input");
+  input.type = "BUTTON";
+  input.value = results;
+  var currTime = document.createElement("input");
+  currTime.type = "BUTTON";
+  currTime.value = getTime();
+
+  container.appendChild(input);
+  container.appendChild(currTime);
+  container.appendChild(document.createElement("br"));
+  document.getElementById("scanner").value= "";
+});
+
+
+
+function getTime (){
+  var today = new Date();
+  var month = monthNames[today.getMonth()];
+  var date = today.getDate();
+  var year = today.getFullYear();
+  var hour = today.getHours();
+  var minutes = today.getMinutes();
+  return hour+ ":"+minutes+", " +month + " " + date + ", " + year;
+}
+</script>
+
+  <head>
+    <title>iPRED</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./public/stylesheets/style.css">
+  </head>
+
+  <body>
+
+          <span class = "blue"><h1>iPRED Websocket API Endpoint</h1>
+          <p style="font-size:1em;">Graduation Project of Zhenwei Wang, MSIS CS, UNC Chapel Hill.<br><br>Special thanks to IBM Bluemix, Waton API, Twitter, Socket.io, and D3.js <br><br>MIT Licence®
+          </p>
+          <img src="/public/images/bluemix.png" alt="bluemix" height="50" width="50">
+          <img src="/public/images/watson.png" alt="watson" height="50" width="50">
+          <img src="/public/images/twitter.png" alt="twitter" height="50" width="50">
+          <img src="/public/images/d3.png" alt="d3" height="50" width="50">
+
+</span>
+<br>
+<br>
+
+          <input type="text" id="scanner" autofocus>
+
+          <button onclick="socket_conn()">Test Socket Connectivity</button>
+          <div id="container"/>
+  </body>
+
+</html>
