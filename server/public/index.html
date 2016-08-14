@@ -2,24 +2,40 @@
 <html>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-var socket = io.connect('localhost:6003', {reconnect: true});
+
+const link = 'http://ipred.mybluemix.net/';
+
+
+const socket = io.connect(link,{query:""});
+
 const monthNames = ["January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
 
 function socket_conn(event){
-  var inputStr  = document.getElementById("scanner").value;
+  var inputSpace =document.getElementById("key");
+  var inputStr  = inputSpace.value;
+
+  socket.io.opts.query = 'id='+inputStr;
+  socket.connect();
+
   if (inputStr.length!=0){
-  socket.emit('test',inputStr)
+  socket.emit('test',inputStr);
 }
 else {
   alert("Your Input is invalid");
 }
 };
 
-socket.on('testRespond', function(results) {
-  console.log('test respond received');
+socket.on('error',function(response){
+  alert("Not Connected");
+  socket.disconnect();
+});
 
+socket.on('testResponse', function(results) {
+  console.log('Test response received');
+  var inputSpace =document.getElementById("key");
+  inputSpace.disabled = 'disabled';
   var container = document.getElementById("container");
 
   var input = document.createElement("input");
@@ -32,7 +48,8 @@ socket.on('testRespond', function(results) {
   container.appendChild(input);
   container.appendChild(currTime);
   container.appendChild(document.createElement("br"));
-  document.getElementById("scanner").value= "";
+  document.getElementById("conn_button").disabled = true;
+
 });
 
 
@@ -69,10 +86,9 @@ function getTime (){
 </span>
 <br>
 <br>
+          Validation key &nbsp <input type="text" id="key" autofocus><br><br>
 
-          <input type="text" id="scanner" autofocus>
-
-          <button onclick="socket_conn()">Test Socket Connectivity</button>
+          <button id ='conn_button' onclick="socket_conn()">Test Socket Connectivity</button>
           <div id="container"/>
   </body>
 
