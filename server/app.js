@@ -9,24 +9,33 @@ var app = express();
 
 // use basic id to verify access
 // also websocket connectivity test key
-const id = 'sils2016';
+const id = '*******';
 
 var encodedString = btoa(id);
-
-app.use(express.static(__dirname));
 
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 var cfenv = require('cfenv');
 
+//serve two static folders for styling
+app.use(express.static('public/images'));
+app.use(express.static('public/stylesheets'));
 
-app.get('/', function(req, res){
-  var req_id = req.query.id;
-  if (req_id == encodedString){
-  res.sendFile(__dirname + '/public/index.html');
-}
+// if user failed to provide valid if token, forbid access
+app.use(function(req, res, next) {
+  if (req.query.id != encodedString){
+    console.log("use forbidden");
+    return res.status(403).sendFile(__dirname +'/public/403.html');
+  }
+    next();
 });
+
+// serve static page
+app.get('/', function(req, res){
+    res.sendFile(__dirname + '/public/index.html');
+});
+
 
 var appEnv = cfenv.getAppEnv();
 
@@ -42,11 +51,11 @@ io.use(function(socket, next){
   var queryID = socket.handshake.query.id;
     // return the result of next() to accept the connection.
   if (queryID == id) {
-        console.log('connected!');
+        console.log('Socket connected!');
         return next();
   }
 
-  console.log('rejected!');
+  console.log('Socket rejected!');
 
   // call next() with an Error if you need to reject the connection.
   next(new Error('Authentication error'));
