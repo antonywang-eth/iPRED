@@ -1,0 +1,7 @@
+// this is the file that stores the basic info of the application
+{
+"appName":"Smart SILS",
+"version":"Version 2016.0.1",
+"source" : "School of Information and Library Science, University of North Carolina at Chapel Hill",
+"dev":"Zhenwei Wang"
+}
