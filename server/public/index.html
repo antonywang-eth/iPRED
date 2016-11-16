@@ -14,23 +14,18 @@ const monthNames = ["January", "February", "March", "April", "May", "June",
 ];
 
 function socket_conn(event){
-  var inputSpace =document.getElementById("key");
-  var inputStr  = inputSpace.value;
-
-  socket.io.opts.query = 'id='+inputStr;
   socket.connect();
-
-  if (inputStr.length!=0){
-  socket.emit('test',inputStr);
-}
-else {
-  alert("Your Input is invalid");
-}
+  console.log('tried logging');
 };
 
-socket.on('error',function(response){
-  alert("Not Connected");
-  socket.disconnect();
+
+
+
+socket.on('onlogin',function(response){
+  if (response.status=='granted'){
+    console.log("COnnected!");
+  }
+
 });
 
 socket.on('testResponse', function(results) {

@@ -1,7 +1,9 @@
 
 'use strict';
 
-import React, { Component } from 'react';
+import React, { Component} from 'react';
+
+import userDefaults from 'react-native-user-defaults'
 
 import Dimensions from 'Dimensions';
 
@@ -16,14 +18,31 @@ import {
   TextInput,
   Switch,
   TouchableOpacity,
-  Alert
+  Alert,
+  AlertIOS,
+  DeviceEventEmitter
 } from 'react-native';
+
+const smarturl = "ipred.mybluemix.net";
+window.navigator.userAgent = "react-native"
+const io = require('socket.io-client/socket.io');
+const smartSocket  = io(smarturl, {transports: ['websocket'] });
 
 const aboutApp = require('./res/about/about.json');
 const backgroundImage = require('./res/drawable/sils_bkg.png');
 const height = Dimensions.get('window').height;
 const width = Dimensions.get('window').width;
 
+// var Beacons = require('react-native-ibeacon');
+// // Define a region which can be identifier + uuid,
+// // identifier + uuid + major or identifier + uuid + major + minor
+// // (minor and major properties are numbers)
+// var region = {
+//     identifier: 'Estimotes',
+//     uuid: 'B9407F30-F5F8-466E-AFF9-25556B57FE6D'
+// };
+
+var UserMain = require('./UserMain.ios.js');
 /*
   PixelRatio.get() === 2
   iPhone 4, 4S
@@ -34,7 +53,43 @@ const width = Dimensions.get('window').width;
 */
 if (PixelRatio.get()==2){ var ratio = PixelRatio.get()*0.9;}
 else if (PixelRatio.get()==3){ var ratio = PixelRatio.get()*0.7;}
+// Beacons.requestWhenInUseAuthorization();
+//
+// Beacons.startMonitoringForRegion(region);
+// Beacons.startRangingBeaconsInRegion(region);
+//
+// Beacons.startUpdatingLocation();
 
+// Listen for beacon changes
+// var subscription = DeviceEventEmitter.addListener(
+//   'beaconsDidRange',
+//   (data) => {
+//     Alert.alert(null,JSON.stringify(data),
+//     [{text: 'OK', onPress: () => console.log('OK Pressed')}]);
+//     //         onPress: () => {
+//     //             if (this.state.username==''){
+//     //               this.refs.usernameInput.focus();
+//     //             }
+//     //             else{
+//     //               this.refs.passwordInput.focus();
+//     //             }
+//     //         }
+//     //     }
+//     //   ]
+//     // data.region - The current region
+//     // data.region.identifier
+//     // data.region.uuid
+//
+//     // data.beacons - Array of all beacons inside a region
+//     //  in the following structure:
+//     //    .uuid
+//     //    .major - The major version of a beacon
+//     //    .minor - The minor version of a beacon
+//     //    .rssi - Signal strength: RSSI value (between -100 and 0)
+//     //    .proximity - Proximity value, can either be "unknown", "far", "near" or "immediate"
+//     //    .accuracy - The accuracy of a beacon
+//   }
+// );
 
 class login extends Component {
   constructor(props) {
@@ -45,14 +100,58 @@ class login extends Component {
     falseSwitchIsOn:false,
   }
   this._doLogin = this._doLogin.bind(this);
+  this.socket = smartSocket;
 }
 
 componentWillMount() {
-    // Animate creation
+    this.socket.on('onlogin',(data) =>{
+      // data format {'username':'data.username','status':'granted'}
+
+      // if login succeed
+      if (data.status=='granted'){
+        this.props.navigator.replace(
+            {title:"Smart SILS",
+             component: UserMain,
+             passProps: { loginInfo: data.username }
+          },
+        )
+      }
+      // if login failed
+      else{
+        AlertIOS.alert('User not registered',data.username+' is not registered to use the system.',[
+                                                          {text: 'OK',onPress:()=>{
+                                                            this.setState({username: ""});
+                                                            this.setState({password: ""});
+                                                          }},
+                                                        ])
+
+      }
+
+
+    }
+  )
+
+  //
+  this.socket.on('servers',(data) =>{
+    //use userdefautls to store server data
+    var serverData =JSON.stringify(data);
+    userDefaults.set('servers', serverData).then(data => {console.log("Done!")});
+
+
+  });
+
+    this.socket.on("connect_error"||"connect_failed"||"connect_timeout", (data) =>{
+        this.socket.disconnect();
+        return(AlertIOS.alert('Connection Error','Server Connection Lost!',[
+                                                                              {text: 'Retry',onPress: () =>this.socket.connect()},
+                                                                              {text: 'Cancel'},
+                                                        ]))
+    });
 
   }
 
   _doLogin(){
+    this.socket.connect();
     if(this.state.username=='' || this.state.password==''){
       Alert.alert(null,'Please enter username and password',
       [
@@ -69,11 +168,15 @@ componentWillMount() {
       ]
     )
     }
+    else{
+      this.socket.emit('login',{'username':this.state.username,'type':'client'});
+
+    }
   }
 
   render(){
     return (
-      <Image style={styles.fitScreen} source={backgroundImage}>
+      <Image style={styles.fitScreen} source={require('./res/drawable/sils_bkg.png')}>
              <View style={styles.container}>
                  <StatusBar barStyle="light-content"/>
                  <View style={styles.titleBox}>
